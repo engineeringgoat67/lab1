@@ -30,7 +30,7 @@
      FILE gpio.h
      - - - - - -
      This file contains some (macro) constants that are used here
-     You may need to add or change constants
+     *****You may need to add or change constants*****
  -------------------------------------- */
 
 /*----------------------------------------------------------------------------
