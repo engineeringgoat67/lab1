@@ -33,98 +33,152 @@
      *****You may need to add or change constants*****
  -------------------------------------- */
 
+
 /*----------------------------------------------------------------------------
   Turn LEDs on or off
     onOff can be ON or OFF
 *----------------------------------------------------------------------------*/
+
 void setRedLED(int onOff) {
   if (onOff == ON) {
-    PTE->PCOR = MASK(RED_LED_POS) ;
+    PTE->PCOR = MASK(RED_LED_POS);
   }
   if (onOff == OFF) {
-    PTE->PSOR =  MASK(RED_LED_POS) ;
+    PTE->PSOR = MASK(RED_LED_POS);
   }
-  // no change otherwise
 }
+
 
 void setGreenLED(int onOff) {
   if (onOff == ON) {
-    PTC->PCOR = MASK(GREEN_LED_POS) ;
+    PTC->PCOR = MASK(GREEN_LED_POS);
   }
   if (onOff == OFF) {
-    PTC->PSOR = MASK(GREEN_LED_POS) ;
+    PTC->PSOR = MASK(GREEN_LED_POS);
   }
-  // no change otherwise
 }
+
 
 void setBlueLED(int onOff) {
   if (onOff == ON) {
-    PTE->PCOR = MASK(BLUE_LED_POS) ;
+    PTE->PCOR = MASK(BLUE_LED_POS);
   }
   if (onOff == OFF) {
-    PTE->PSOR = MASK(BLUE_LED_POS) ;
+    PTE->PSOR = MASK(BLUE_LED_POS);
   }
-  // no change otherwise
 }
+
 
 /*----------------------------------------------------------------------------
   every10ms - this function runs every 10ms
 
-This function evaluates whether the system should change state (only occassionally)
+  Red    = 2 seconds
+  Green  = 2 seconds
+  Blue   = 2 seconds
+  All OFF = 4 seconds
 
-The system stays in each state for a number of cycles, counted by the 'count'
-variable. Each cycle is 10ms long, so 100 cycles gives 100 x 10ms = 1 sec
+  Total cycle = 10 seconds
 *----------------------------------------------------------------------------*/
-int state = REDOFF ;  // this variable holds the current state
-int count = OFFPERIOD ; // this counter variable to decremented to zero
+
+int state = REDOFF;
+int count = OFFPERIOD;
+
 
 void every10ms() {
-  if (count > 0) count -- ; // decrement the counter
+
+  if (count > 0) {
+    count--;
+  }
 
   switch (state) {
 
-    // there is one case for each state
-    // each case has the same structure
+    /*------------------------------------------------
+      RED
+    ------------------------------------------------*/
 
-    case REDOFF:  // the state names are defined in the gpio.h file
-      if (count == 0) {    // now time to change state
-        setRedLED(ON) ;    // set the LEDs for the new state
-        state = REDON ;    // ... the new state
-        count = ONPERIOD ; // reset the counter
+    case REDOFF:
+
+      if (count == 0) {
+        setRedLED(ON);
+        state = REDON;
+        count = ONPERIOD;
       }
-      break ;
+
+      break;
+
 
     case REDON:
-      if (count == 0) {
-        setRedLED(OFF) ;     // set the LEDs for the new state
-        state = GREENOFF ;
-        count = OFFPERIOD ;
-      }
-      break ;
 
-    case GREENOFF:
       if (count == 0) {
-        setGreenLED(ON) ;    // set the LEDs for the new state
-        state = GREENON ;
-        count = ONPERIOD ;
+        setRedLED(OFF);
+        setGreenLED(ON);
+
+        state = GREENON;
+        count = ONPERIOD;
       }
-      break ;
+
+      break;
+
+
+    /*------------------------------------------------
+      GREEN
+    ------------------------------------------------*/
 
     case GREENON:
+
       if (count == 0) {
-        setGreenLED(OFF) ;   // set the LEDs for the new state
-        state = REDOFF ;
-        count = OFFPERIOD ;
+        setGreenLED(OFF);
+        setBlueLED(ON);
+
+        state = BLUEON;
+        count = ONPERIOD;
       }
-      break ;
+
+      break;
+
+
+    /*------------------------------------------------
+      BLUE
+    ------------------------------------------------*/
+
+    case BLUEON:
+
+      if (count == 0) {
+        setBlueLED(OFF);
+
+        state = BLUEOFF;
+        count = OFFPERIOD;
+      }
+
+      break;
+
+
+    /*------------------------------------------------
+      4 second OFF period
+    ------------------------------------------------*/
+
+    case BLUEOFF:
+
+      if (count == 0) {
+        setRedLED(ON);
+
+        state = REDON;
+        count = ONPERIOD;
+      }
+
+      break;
   }
 }
 
+
 /*----------------------------------------------------------------------------
   Configuration
-  The GPIO ports for the LEDs are configured. This is not explained in week 1
+  The GPIO ports for the LEDs are configured.
+  This is not explained in week 1.
 *----------------------------------------------------------------------------*/
+
 void configure() {
+
   // Configuration steps
   //   1. Enable clock to GPIO ports
   //   2. Enable GPIO ports
@@ -136,6 +190,7 @@ void configure() {
   PCC_PORTE |= PCC_CLKCFG_CGC(1);
 
   // Make 3 pins GPIO
+
   PORTE->PCR[RED_LED_POS] &= ~PORT_PCR_MUX_MASK;
   PORTE->PCR[RED_LED_POS] |= PORT_PCR_MUX(1);
 
@@ -146,34 +201,37 @@ void configure() {
   PORTE->PCR[BLUE_LED_POS] |= PORT_PCR_MUX(1);
 
   // Set ports to outputs
+
   PTE->PDDR |= MASK(RED_LED_POS) | MASK(BLUE_LED_POS);
   PTC->PDDR |= MASK(GREEN_LED_POS);
 
   // Turn off LEDs
+
   PTE->PSOR = MASK(RED_LED_POS) | MASK(BLUE_LED_POS);
   PTC->PSOR = MASK(GREEN_LED_POS);
 }
 
+
 /*----------------------------------------------------------------------------
   MAIN function
  *----------------------------------------------------------------------------*/
+
 int main (void) {
 
-  configure();              // Configure GPIO outputs for the LEDs
+  configure();
 
-  setRedLED(OFF);           // Ensure all LEDs are off
+  setRedLED(OFF);
   setGreenLED(OFF);
   setBlueLED(OFF);
 
-  Init_SysTick(1000);       // Initialise SysTick every 1 ms
+  Init_SysTick(1000);
 
   waitSysTickCounter(10);
 
-  while (1) {               // This runs forever
+  while (1) {
 
-    every10ms();            // Call this every 10 ms
+    every10ms();
 
-    waitSysTickCounter(10); // Cycle every 10 ms
+    waitSysTickCounter(10);
   }
 }
-
