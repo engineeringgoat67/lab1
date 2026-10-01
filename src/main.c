@@ -131,16 +131,17 @@ void configure() {
   //   3. Set GPIO direction to output
   //   4. Ensure LEDs are off
 
-  // Enable clock to ports B and D
-  //SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK | SIM_SCGC5_PORTD_MASK;
-  PCC_PORTC |= PCC_CLKCFG_CGC(1) ;
-  PCC_PORTE |= PCC_CLKCFG_CGC(1) ;
+  // Enable clock to ports C and E
+  PCC_PORTC |= PCC_CLKCFG_CGC(1);
+  PCC_PORTE |= PCC_CLKCFG_CGC(1);
 
   // Make 3 pins GPIO
   PORTE->PCR[RED_LED_POS] &= ~PORT_PCR_MUX_MASK;
   PORTE->PCR[RED_LED_POS] |= PORT_PCR_MUX(1);
+
   PORTC->PCR[GREEN_LED_POS] &= ~PORT_PCR_MUX_MASK;
   PORTC->PCR[GREEN_LED_POS] |= PORT_PCR_MUX(1);
+
   PORTE->PCR[BLUE_LED_POS] &= ~PORT_PCR_MUX_MASK;
   PORTE->PCR[BLUE_LED_POS] |= PORT_PCR_MUX(1);
 
@@ -151,22 +152,28 @@ void configure() {
   // Turn off LEDs
   PTE->PSOR = MASK(RED_LED_POS) | MASK(BLUE_LED_POS);
   PTC->PSOR = MASK(GREEN_LED_POS);
-  // end of configuration code
 }
 
 /*----------------------------------------------------------------------------
   MAIN function
  *----------------------------------------------------------------------------*/
 int main (void) {
-  configure() ;     // configure the GPIO outputs for the LED
-  setRedLED(OFF) ;  // ensure all the LEDs are off
-  setGreenLED(OFF) ;
-  setBlueLED(OFF) ;
-  Init_SysTick(1000) ; // initialse SysTick every 1ms
-  waitSysTickCounter(10) ;
-  while (1) {      // this runs for ever
-    every10ms() ;  // call this every 10ms
-    // delay
-    waitSysTickCounter(10) ;  // cycle every 10 ms - not explained in week 1
+
+  configure();              // Configure GPIO outputs for the LEDs
+
+  setRedLED(OFF);           // Ensure all LEDs are off
+  setGreenLED(OFF);
+  setBlueLED(OFF);
+
+  Init_SysTick(1000);       // Initialise SysTick every 1 ms
+
+  waitSysTickCounter(10);
+
+  while (1) {               // This runs forever
+
+    every10ms();            // Call this every 10 ms
+
+    waitSysTickCounter(10); // Cycle every 10 ms
   }
 }
+
